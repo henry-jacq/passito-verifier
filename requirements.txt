@@ -1,0 +1,10 @@
+certifi==2024.12.14
+charset-normalizer==3.4.0
+colorzero==2.0
+gpiozero==2.0.1
+idna==3.10
+numpy==2.2.1
+opencv-python==4.10.0.84
+pyzbar==0.1.9
+requests==2.32.3
+urllib3==2.3.0

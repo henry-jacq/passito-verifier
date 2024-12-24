@@ -1,0 +1,90 @@
+sudo apt update
+sudo apt install python3-opencv
+pip3 install pyzbar
+
+
+libcamera-still --rotation 180 --width 2592 --height 1944 --quality 100 --autofocus-on-capture -o output_rotated.jpg
+
+sudo apt-get install libcap-dev
+sudo apt-get install -y libcamera-dev libcamera-apps
+
+sudo apt-get install -y python3-libcamera
+
+
+sudo apt update
+sudo apt install libzbar0 raspi-config
+
+sudo apt update
+sudo apt install -y python3-picamera2
+sudo apt install python3-picamzero
+
+
+sudo apt update
+sudo apt install libraspberrypi-bin libraspberrypi-dev
+
+sudo apt update
+sudo apt install -y \
+    vim \
+    nano \
+    git \
+    wget \
+    curl \
+    htop \
+    unzip \
+    tmux \
+    build-essential \
+    python3-pip \
+    python3-venv \
+    python3-dev \
+    libffi-dev
+
+sudo apt install -y \
+    libcamera-tools \
+    v4l-utils \
+    ffmpeg \
+    libjpeg-dev \
+    libpng-dev \
+    libtiff-dev
+
+pip install \
+    opencv-python \
+    opencv-python-headless \
+    pyzbar \
+    cryptography \
+    Pillow \
+    endroid-qrcode
+
+sudo apt install -y \
+    libatlas-base-dev \
+    libavcodec-dev \
+    libavformat-dev \
+    libswscale-dev \
+    libx264-dev \
+    libx265-dev
+
+For web server and backend
+sudo apt install -y \
+    nginx \
+    php \
+    php-cli \
+    php-curl \
+    php-mbstring \
+    php-xml \
+    composer \
+    sqlite3 \
+    php-sqlite3
+
+
+sudo apt install -y \
+    net-tools \
+    dnsutils \
+    wireless-tools \
+    openssh-server
+
+sudo apt install -y zbar-tools # It is GUI
+sudo apt install -y openssl
+sudo apt install libatlas-base-dev libjpeg-dev libpng-dev libtiff-dev libavcodec-dev libavformat-dev libswscale-dev
+
+
+sudo apt update && sudo apt upgrade -y
+sudo apt autoremove -y
