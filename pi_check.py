@@ -1,23 +1,23 @@
-import picamera
+from picamera2 import Picamera2
 from time import sleep
 
 def verify_camera_access():
     try:
-        # Attempt to initialize the Pi Camera
-        with picamera.PiCamera() as camera:
-            print("Camera initialized successfully.")
-            print("Testing camera preview...")
-            
-            # Start the camera preview for a few seconds
-            camera.start_preview()
-            sleep(3)
-            camera.stop_preview()
-            
-            print("Camera preview works. Camera access verified.")
-            return True
-    except picamera.PiCameraError as e:
-        print(f"Pi Camera Error: {e}")
-        return False
+        # Initialize the Pi Camera
+        picam2 = Picamera2()
+        print("Camera initialized successfully.")
+        
+        # Configure the camera for preview
+        preview_config = picam2.create_preview_configuration()
+        picam2.configure(preview_config)
+        
+        print("Testing camera preview...")
+        picam2.start()
+        sleep(3)  # Show the preview for 3 seconds
+        picam2.stop()
+        
+        print("Camera preview works. Camera access verified.")
+        return True
     except Exception as e:
         print(f"Unexpected Error: {e}")
         return False
