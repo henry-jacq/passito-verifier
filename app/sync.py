@@ -1,45 +1,55 @@
+import hashlib
 import requests
-import json
 
 
-def sync_logs(api_url, auth_token, log_data):
-    """
-    Function to sync logs to the server.
-    Args:
-        api_url (str): The server API URL.
-        auth_token (str): The authorization token.
-        log_data (dict): The log data to be sent to the server.
-    """
-    headers = {
-        'Authorization': f'Bearer {auth_token}',
-        'Content-Type': 'application/json',
-    }
+class DataSync:
+    def __init__(self, file_path="qr_data.txt", api_url=None):
+        self.file_path = file_path
+        self.api_url = api_url
+        self.last_hash = None
 
-    try:
-        response = requests.post(
-            f"{api_url.rstrip('/')}/sync", headers=headers, json=log_data)
-        # Raise exception for unsuccessful status codes.
-        response.raise_for_status()
+    def _compute_file_hash(self):
+        """Compute a hash of the file contents."""
+        try:
+            with open(self.file_path, "r") as file:
+                file_data = file.read()
+                return hashlib.md5(file_data.encode()).hexdigest()
+        except FileNotFoundError:
+            return None
 
-        if response.status_code == 200:
-            print("[+] Logs synced successfully.")
+    def _read_data_from_file(self):
+        """Read unique data from the file."""
+        try:
+            with open(self.file_path, "r") as file:
+                return [line.strip() for line in file]
+        except FileNotFoundError:
+            return []
+
+    def sync_with_server(self):
+        """Sync data with the server if the file has changed."""
+        current_hash = self._compute_file_hash()
+
+        # Skip sync if no changes detected
+        if current_hash == self.last_hash:
+            print("No changes detected. Skipping sync.")
+            return False
+
+        # Read data and sync with server
+        data = self._read_data_from_file()
+        if self.api_url:
+            try:
+                response = requests.post(self.api_url, json={"data": data})
+                if response.status_code == 200:
+                    print("Data successfully synced with the server.")
+                    self.last_hash = current_hash
+                    return True
+                else:
+                    print(f"Failed to sync data. Server responded with: {
+                          response.status_code}")
+                    return False
+            except requests.exceptions.RequestException as e:
+                print(f"API not available: {e}")
+                return False
         else:
-            print("[-] Failed to sync logs.")
-            print(response.text)
-    except requests.exceptions.RequestException as e:
-        print("[-] Error syncing logs.")
-        print(f"Error: {e}")
-
-
-def format_log_data(log_message, log_level="INFO"):
-    """
-    Function to format log data before sending it to the server.
-    Args:
-        log_message (str): The log message.
-        log_level (str): The log level (e.g., INFO, ERROR).
-    """
-    return {
-        'message': log_message,
-        'level': log_level,
-        'timestamp': '2025-01-06T12:00:00',  # Replace with actual timestamp logic
-    }
+            print("API URL not provided. Sync aborted.")
+            return False

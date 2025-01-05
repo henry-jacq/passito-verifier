@@ -50,10 +50,6 @@ def get_public_ip():
 
 # Register the device
 def register_device(api_url, auth_token):
-    if not test_api(api_url, auth_token):
-        print("[-] Device cannot be registered.")
-        return
-
     ip_address = get_public_ip()
     machine_id = get_machine_id()
         
