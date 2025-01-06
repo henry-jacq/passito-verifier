@@ -82,9 +82,11 @@ def register_device(api_url, auth_token):
             print("[+] Device registered successfully.")
             # Save the registration state
             save_registration_state(config, {"registered": True, "machine_id": machine_id, "ip_address": ip_address})
+            return True
         else:
             print("[-] Failed to register device.")
             print(response.json())
+            return False
     except requests.exceptions.RequestException as e:
         print("[-] Failed to register device.")
         print(f"Error: {e}")
