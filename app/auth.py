@@ -1,3 +1,5 @@
+import os
+import json
 import requests
 
 # Read machine ID from /etc/machine-id
@@ -37,6 +39,7 @@ def test_api(api_url, auth_token):
         print(f"[-] Reason: {e.response.reason}")
         return False
 
+
 # Get the network IP address
 def get_public_ip():
     try:
@@ -50,8 +53,14 @@ def get_public_ip():
 
 # Register the device
 def register_device(api_url, auth_token):
+    if not test_api(api_url, auth_token):
+        exit(1)
+    
+    print("[!] Registering device...")
+
     ip_address = get_public_ip()
     machine_id = get_machine_id()
+    config = os.environ.get('CONFIG_PATH')
         
     headers = {
         'Authorization': f'Bearer {auth_token}',
@@ -71,9 +80,30 @@ def register_device(api_url, auth_token):
 
         if response.status_code == 200:
             print("[+] Device registered successfully.")
+            # Save the registration state
+            save_registration_state(config, {"registered": True, "machine_id": machine_id, "ip_address": ip_address})
         else:
             print("[-] Failed to register device.")
             print(response.json())
     except requests.exceptions.RequestException as e:
         print("[-] Failed to register device.")
         print(f"Error: {e}")
+
+
+# Save the registration state to a file
+def save_registration_state(config, state):
+    with open(config, 'w') as f:
+        json.dump(state, f)
+
+
+# Load the registration state from a file
+def load_registration_state(config):
+    if os.path.exists(config):
+        with open(config, 'r') as f:
+            return json.load(f)
+    return None
+
+# Check if the device is already registered by reading the config
+def is_registered():
+    state = load_registration_state()
+    return state is not None and state.get('registered', False)
