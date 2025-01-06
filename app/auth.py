@@ -2,8 +2,6 @@ import os
 import json
 import requests
 
-config = os.environ.get('CONFIG_PATH')
-
 # Read machine ID from /etc/machine-id
 def get_machine_id():
     try:
@@ -100,13 +98,25 @@ def register_device(api_url, auth_token):
 
 # Load the registration state from a file
 def load_registration_state():
+    config = os.environ.get('CONFIG_PATH')
     if config and os.path.exists(config):
-        with open(config, 'r') as f:
-            return json.load(f)
+        try:
+            # Check if the file is not empty
+            if os.path.getsize(config) > 0:
+                with open(config, 'r') as f:
+                    return json.load(f)
+            else:
+                print("[!] Config file is empty.")
+                return None
+        except json.JSONDecodeError as e:
+            print(f"[!] Failed to parse config file. Error: {e}")
+            return None
+    print("[!] Config file does not exist or path is not set.")
     return None
 
 # Save the registration state to a file
 def save_registration_state(state):
+    config = os.environ.get('CONFIG_PATH')
     if config:
         with open(config, 'w') as f:
             json.dump(state, f)
