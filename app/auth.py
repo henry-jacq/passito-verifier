@@ -13,7 +13,7 @@ def get_machine_id():
 
 # Test the availability of the API
 def test_api(api_url, auth_token):
-    print("[!] Testing API availability...")
+    print("[*] Testing API availability")
     test_endpoint = f"{api_url.rstrip('/')}/test"
 
     try:
@@ -28,7 +28,8 @@ def test_api(api_url, auth_token):
 
         # Check the response status and message
         if str(response.status_code).startswith('2') and response.json().get("status", False):
-            print("[+] API Response:", response.json().get("message"))
+            if os.environ.get("DEBUG") == "1":
+                print("DEBUG: API Response:", response.json().get("message"))
             return True
         else:
             print("[-] API is available but returned an unexpected response.")
@@ -58,10 +59,11 @@ def register_device(api_url, auth_token):
 
     # Register the device if not already registered
     if is_device_registered():
-        print("[+] Device is already registered. Skipping registration.")
+        print("[+] Device is already registered.")
+        print("[!] If not registered, delete the config file and restart the application.")
         return True
     
-    print("[!] Registering device...")
+    print("[*] Registering verifier")
 
     ip_address = get_public_ip()
     machine_id = get_machine_id()
@@ -84,7 +86,7 @@ def register_device(api_url, auth_token):
 
         if response.status_code == 200:
             save_registration_state({"registered": True, "machine_id": machine_id, "ip_address": ip_address})
-            print("[+] Device registered successfully.")
+            print("[+] Verifier Registration successful")
             # Save the registration state
             return True
         else:
