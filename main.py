@@ -3,6 +3,7 @@ import time
 import json
 from dotenv import load_dotenv
 from app.auth import register_device
+from app.server import is_active
 
 # Load environment variables
 os.environ.pop("DEBUG", None)
@@ -54,7 +55,11 @@ if __name__ == "__main__":
 
     # Register the device
     if not register_device(API_URL, AUTH_TOKEN):
-        print("[-] Device registration failed. Exiting...")
+        print("\n[-] Device registration failed. Exiting...")
+        exit(1)
+        
+    if not is_active(API_URL, AUTH_TOKEN):
+        print("\n[-] Device is not active. Exiting...")
         exit(1)
 
     print("[+] Proceeding with application logic...")
