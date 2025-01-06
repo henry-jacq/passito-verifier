@@ -2,6 +2,8 @@ import os
 import json
 import requests
 
+config = os.environ.get('CONFIG_PATH')
+
 # Read machine ID from /etc/machine-id
 def get_machine_id():
     try:
@@ -55,12 +57,16 @@ def get_public_ip():
 def register_device(api_url, auth_token):
     if not test_api(api_url, auth_token):
         exit(1)
+
+    # Register the device if not already registered
+    if is_device_registered():
+        print("[+] Device is already registered. Skipping registration.")
+        return True
     
     print("[!] Registering device...")
 
     ip_address = get_public_ip()
     machine_id = get_machine_id()
-    config = os.environ.get('CONFIG_PATH')
         
     headers = {
         'Authorization': f'Bearer {auth_token}',
@@ -79,9 +85,9 @@ def register_device(api_url, auth_token):
         response.raise_for_status()
 
         if response.status_code == 200:
+            save_registration_state({"registered": True, "machine_id": machine_id, "ip_address": ip_address})
             print("[+] Device registered successfully.")
             # Save the registration state
-            save_registration_state(config, {"registered": True, "machine_id": machine_id, "ip_address": ip_address})
             return True
         else:
             print("[-] Failed to register device.")
@@ -92,20 +98,21 @@ def register_device(api_url, auth_token):
         print(f"Error: {e}")
 
 
-# Save the registration state to a file
-def save_registration_state(config, state):
-    with open(config, 'w') as f:
-        json.dump(state, f)
-
-
 # Load the registration state from a file
-def load_registration_state(config):
-    if os.path.exists(config):
+def load_registration_state():
+    if config and os.path.exists(config):
         with open(config, 'r') as f:
             return json.load(f)
     return None
 
+# Save the registration state to a file
+def save_registration_state(state):
+    if config:
+        with open(config, 'w') as f:
+            json.dump(state, f)
+
+
 # Check if the device is already registered by reading the config
-def is_registered():
+def is_device_registered():
     state = load_registration_state()
     return state is not None and state.get('registered', False)
