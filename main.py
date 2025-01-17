@@ -59,7 +59,7 @@ if __name__ == "__main__":
         exit(1)
         
     if not is_active(API_URL, AUTH_TOKEN):
-        print("\n[-] Device is not active. Exiting...")
+        print("\n[-] Device is not active. Contact Administrator!")
         exit(1)
 
     print("[+] Proceeding with application logic...")
