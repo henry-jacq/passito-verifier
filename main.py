@@ -4,6 +4,7 @@ import json
 from dotenv import load_dotenv
 from app.auth import register_device
 from app.server import is_active
+from app.detector import CLIQRCodeDetector
 
 # Load environment variables
 os.environ.pop("DEBUG", None)
@@ -63,3 +64,5 @@ if __name__ == "__main__":
         exit(1)
 
     print("[+] Proceeding with application logic...")
+    detector = CLIQRCodeDetector()
+    detector.detect_and_save()
