@@ -32,7 +32,9 @@ def test_api_availablity(api_url, auth_token):
         return False
 
 # Send a request to the server API
-def send_request(api_url, auth_token, endpoint, data):
+
+
+def send_request(api_url, auth_token, endpoint, data, debug=False):
     if not test_api_availablity(api_url, auth_token):
         exit(1)
 
@@ -40,21 +42,42 @@ def send_request(api_url, auth_token, endpoint, data):
         'Authorization': f'Bearer {auth_token}',
         'Content-Type': 'application/json',
     }
-    
+
+    # Debugging: show input data and URL
+    if debug:
+        print(f"[DEBUG] Sending data to {api_url.rstrip('/')}/{endpoint}")
+        print(f"[DEBUG] Data: {data}")
+
     try:
         response = requests.post(
             f"{api_url.rstrip('/')}/{endpoint}", headers=headers, json=data)
+
+        # Debugging: show the response status and content
+        if debug:
+            print(f"[DEBUG] Response status: {response.status_code}")
+            print(f"[DEBUG] Response content: {response.text}")
+
         # Raises an HTTPError for bad responses (4xx, 5xx)
         response.raise_for_status()
 
         if str(response.status_code).startswith('2') and not response.is_redirect:
+            if debug:
+                print(f"[DEBUG] Response JSON: {response.json()}")
             return True
         else:
             print(response.json())
             return False
-        
+
     except requests.exceptions.RequestException as e:
-        print(f"[-] Error: {e.response.reason}")
+        print(f"[-] Error: {e.response.reason if e.response else e}")
+
+        # Debugging: check if the error has a response and print it
+        if debug and e.response:
+            try:
+                print(f"[DEBUG] Response: {e.response.json()}")
+            except ValueError:
+                print("[DEBUG] No JSON response available.")
+
     return False
 
 
