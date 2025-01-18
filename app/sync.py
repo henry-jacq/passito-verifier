@@ -28,7 +28,7 @@ class DataSync:
             print("File not found while reading data.")
             return []
 
-    def sync_with_server(self, data):
+    def sync_with_server(self, data, player):
         """Sync data with the server if the file has changed."""
         if not self.api_url or not self.auth_token:
             print("API URL or auth token not provided. Sync aborted.")
@@ -55,6 +55,9 @@ class DataSync:
                                self.endpoint, {"data": data}, debug=True)
         if success:
             print("[+] Data successfully synced with the server.")
+            player.mixer.music.play()
+            while player.mixer.music.get_busy():
+                pass
             # self.last_hash = current_hash
             return True
         else:

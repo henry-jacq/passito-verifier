@@ -1,3 +1,4 @@
+import pygame
 import os
 import time
 import json
@@ -49,6 +50,10 @@ if not AUTH_TOKEN or not API_URL:
         "AUTH_TOKEN or API_URL is not set in the environment variables."
     )
 
+# Initialize the pygame mixer
+pygame.mixer.init()
+pygame.mixer.music.load("sounds/success.mp3")
+
 # Starting the application
 if __name__ == "__main__":
     print(f"[*] Starting Passito Verifier v{VERSION}")
@@ -65,4 +70,4 @@ if __name__ == "__main__":
 
     print("[+] Proceeding with application logic...")
     detector = CLIQRCodeDetector(api_url=API_URL, auth_token=AUTH_TOKEN)
-    detector.detect_and_save()
+    detector.detect_and_save(player=pygame)

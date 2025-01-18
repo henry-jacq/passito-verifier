@@ -3,7 +3,7 @@ import time
 import threading
 from app.sync import DataSync
 import cv2
-import base64
+import base64, pygame
 import hashlib
 from Cryptodome.Cipher import AES
 
@@ -41,7 +41,7 @@ class CLIQRCodeDetector:
         with open(self.output_file, "a") as file:
             file.write(data + "\n")
 
-    def detect_and_save(self):
+    def detect_and_save(self, player: pygame.mixer.music):
         """Detect QR codes and save new ones in a CLI environment while syncing data in the background."""
         print("[+] Starting QR code detection. Press Ctrl+C to stop.")
         try:
@@ -68,13 +68,13 @@ class CLIQRCodeDetector:
                         print("[!] Decryption failed or invalid JSON")
                         continue
 
-                    if standardized_data != last_data:  # Only process new QR code data
+                    if standardized_data:  # Only process new QR code data
                         print(f"->  New QR code detected: {standardized_data}")
                         last_data = standardized_data
 
                         # Sync data in a separate thread
                         sync_thread = threading.Thread(
-                            target=self.sync.sync_with_server, args=(standardized_data,))
+                            target=self.sync.sync_with_server, args=(standardized_data, player))
                         sync_thread.start()
 
                         # Update seen data and save (not saving to file as per new instructions)
