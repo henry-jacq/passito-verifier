@@ -3,8 +3,11 @@ import requests
 from app.system import get_machine_id
 
 # Test the availability of the Server API
-def test_api_availablity(api_url, auth_token):
-    print("[*] Testing API availability")
+def test_api_availablity(api_url, auth_token, debug=False):
+    if debug:
+        print("[DEBUG] Testing API availability")
+        print(f"[DEBUG] API URL: {api_url}")
+        print(f"[DEBUG] Auth Token: {auth_token}")
     test_endpoint = f"{api_url.rstrip('/')}/test"
 
     try:
@@ -35,7 +38,7 @@ def test_api_availablity(api_url, auth_token):
 
 
 def send_request(api_url, auth_token, endpoint, data, debug=False):
-    if not test_api_availablity(api_url, auth_token):
+    if not test_api_availablity(api_url, auth_token, debug):
         exit(1)
 
     headers = {

@@ -50,7 +50,7 @@ if not AUTH_TOKEN or not API_URL:
     )
 
 # Starting the application
-if __name__ == "__main__":    
+if __name__ == "__main__":
     print(f"[*] Starting Passito Verifier v{VERSION}")
     time.sleep(1)
 
@@ -58,11 +58,11 @@ if __name__ == "__main__":
     if not register_device(API_URL, AUTH_TOKEN):
         print("\n[-] Device registration failed. Exiting...")
         exit(1)
-        
+
     if not is_active(API_URL, AUTH_TOKEN):
         print("\n[-] Device is not active. Contact Administrator!")
         exit(1)
 
     print("[+] Proceeding with application logic...")
-    detector = CLIQRCodeDetector()
+    detector = CLIQRCodeDetector(api_url=API_URL, auth_token=AUTH_TOKEN)
     detector.detect_and_save()

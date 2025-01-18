@@ -28,32 +28,35 @@ class DataSync:
             print("File not found while reading data.")
             return []
 
-    def sync_with_server(self):
+    def sync_with_server(self, data):
         """Sync data with the server if the file has changed."""
         if not self.api_url or not self.auth_token:
             print("API URL or auth token not provided. Sync aborted.")
             return False
 
-        current_hash = self._compute_file_hash()
+        # current_hash = self._compute_file_hash()
 
         # Skip sync if no changes detected
-        if current_hash == self.last_hash:
-            print("No changes detected. Skipping sync.")
-            return False
+        # if current_hash == self.last_hash:
+        #     print("No changes detected. Skipping sync.")
+        #     return False
 
         # Read data and prepare for sync
-        data = self._read_data_from_file()
-        if not data:
-            print("No data found to sync. Skipping.")
-            return False
+        # data = self._read_data_from_file()
+        # if not data:
+        #     print("No data found to sync. Skipping.")
+        #     return False
+
+        # Print the data to verify its content before sending
+        # print(f"Data to sync: {data}")
 
         # Send request using the provided function
         success = send_request(self.api_url, self.auth_token,
-                               self.endpoint, {"data": data})
+                               self.endpoint, {"data": data}, debug=True)
         if success:
-            print("Data successfully synced with the server.")
-            self.last_hash = current_hash
+            print("[+] Data successfully synced with the server.")
+            # self.last_hash = current_hash
             return True
         else:
-            print("Failed to sync data with the server.")
+            print("[-] Failed to sync data with the server.")
             return False
