@@ -1,4 +1,5 @@
 import hashlib
+import time
 from app.server import send_request
 
 class DataSync:
@@ -58,6 +59,8 @@ class DataSync:
             player.mixer.music.play()
             while player.mixer.music.get_busy():
                 pass
+            
+            time.sleep(10)
             # self.last_hash = current_hash
             return True
         else:

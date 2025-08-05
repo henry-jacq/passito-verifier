@@ -2,6 +2,7 @@ import requests
 
 # Read machine ID from /etc/machine-id
 def get_machine_id():
+    return "5e81e27ffea44770910d8c0a2d4b8e5d"
     try:
         with open('/etc/machine-id', 'r') as f:
             return f.read().strip()
