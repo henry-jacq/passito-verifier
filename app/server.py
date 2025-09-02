@@ -1,13 +1,18 @@
 import os
+import logging
 import requests
 from app.system import get_machine_id
 
+# Configure logging
+logging.basicConfig(level=logging.DEBUG if os.getenv("DEBUG", "0") == "1" else logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
 # Test the availability of the Server API
-def test_api_availablity(api_url, auth_token, debug=False):
-    if debug:
-        print("[DEBUG] Testing API availability")
-        print(f"[DEBUG] API URL: {api_url}")
-        print(f"[DEBUG] Auth Token: {auth_token}")
+def test_api_availability(api_url, auth_token):
+    logging.debug("Testing API availability")
+    logging.debug(f"API URL: {api_url}")
+    logging.debug(f"Auth Token: {auth_token}")
+
     test_endpoint = f"{api_url.rstrip('/')}/test"
 
     try:
@@ -22,23 +27,21 @@ def test_api_availablity(api_url, auth_token, debug=False):
 
         # Check the response status and message
         if str(response.status_code).startswith('2') and response.json().get("status", False):
-            if os.environ.get("DEBUG") == "1":
-                print("DEBUG: API Response:", response.json().get("message"))
+            logging.debug("API Response: %s", response.json().get("message"))
             return True
         else:
-            print("[-] API is available but returned an unexpected response.")
-            print(response.json())
+            logging.warning("API is available but returned an unexpected response.")
+            logging.warning(response.json())
             return False
     except requests.exceptions.RequestException as e:
-        print("[-] API test failed.")
-        print(f"[-] Reason: {e.response.reason}")
+        logging.error("API test failed.")
+        logging.error(f"Reason: {str(e)}")
         return False
 
 # Send a request to the server API
-
-
 def send_request(api_url, auth_token, endpoint, data, debug=False):
-    if not test_api_availablity(api_url, auth_token, debug):
+    if not test_api_availability(api_url, auth_token):
+        logging.error("Exiting due to API unavailability.")
         exit(1)
 
     headers = {
@@ -46,42 +49,19 @@ def send_request(api_url, auth_token, endpoint, data, debug=False):
         'Content-Type': 'application/json',
     }
 
-    # Debugging: show input data and URL
-    if debug:
-        print(f"[DEBUG] Sending data to {api_url.rstrip('/')}/{endpoint}")
-        print(f"[DEBUG] Data: {data}")
-
     try:
-        response = requests.post(
-            f"{api_url.rstrip('/')}/{endpoint}", headers=headers, json=data)
-
-        # Debugging: show the response status and content
         if debug:
-            print(f"[DEBUG] Response status: {response.status_code}")
-            print(f"[DEBUG] Response content: {response.text}")
+            logging.debug("Sending request to endpoint: %s", endpoint)
+            logging.debug("Data: %s", data)
 
-        # Raises an HTTPError for bad responses (4xx, 5xx)
+        response = requests.post(f"{api_url.rstrip('/')}/{endpoint}", headers=headers, json=data)
         response.raise_for_status()
-
-        if str(response.status_code).startswith('2') and not response.is_redirect:
-            if debug:
-                print(f"[DEBUG] Response JSON: {response.json()}")
-            return True
-        else:
-            print(response.json())
-            return False
-
+        logging.info("Request successful: %s", response.json())
+        return response.json()
     except requests.exceptions.RequestException as e:
-        print(f"[-] Error: {e.response.reason if e.response else e}")
-
-        # Debugging: check if the error has a response and print it
-        if debug and e.response:
-            try:
-                print(f"[DEBUG] Response: {e.response.json()}")
-            except ValueError:
-                print("[DEBUG] No JSON response available.")
-
-    return False
+        logging.error("Request failed.")
+        logging.error(f"Reason: {str(e)}")
+        return {"error": str(e)}
 
 
 # Check if the device is active on the server

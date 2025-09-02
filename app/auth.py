@@ -1,12 +1,12 @@
 import os
 import json
 from app.system import get_machine_id, get_public_ip
-from app.server import test_api_availablity, send_request
+from app.server import test_api_availability, send_request
 
 
 # Register the device
 def register_device(api_url, auth_token):
-    if not test_api_availablity(api_url, auth_token):
+    if not test_api_availability(api_url, auth_token):
         exit(1)
 
     # Check if the device is already registered
