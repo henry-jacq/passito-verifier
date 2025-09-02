@@ -47,9 +47,18 @@ if not AUTH_TOKEN or not API_URL:
     logging.error("AUTH_TOKEN or API_URL is not set in the environment variables.")
     raise ValueError("AUTH_TOKEN or API_URL is not set in the environment variables.")
 
-# Initialize the pygame mixer
-pygame.mixer.init()
-pygame.mixer.music.load("sounds/success.mp3")
+"""
+Startup now performs a single API preflight check during registration.
+Subsequent requests skip the ping for performance. Audio playback is non-blocking.
+Registration state is primarily validated against the server; local file is advisory.
+"""
+
+# Initialize the pygame mixer (best-effort)
+try:
+    pygame.mixer.init()
+    pygame.mixer.music.load("sounds/success.mp3")
+except Exception as e:
+    logging.warning(f"Audio init failed: {e}")
 
 # Starting the application
 if __name__ == "__main__":
@@ -61,7 +70,8 @@ if __name__ == "__main__":
         logging.error("Device registration failed. Exiting...")
         exit(1)
 
-    if not is_active(API_URL, AUTH_TOKEN):
+    active_resp = is_active(API_URL, AUTH_TOKEN)
+    if not active_resp or not active_resp.get('ok'):
         logging.error("Device is not active. Contact Administrator!")
         exit(1)
 
