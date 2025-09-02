@@ -12,11 +12,28 @@ def get_machine_id():
 
 
 # Get the network IP address
-def get_public_ip():
-    try:
-        response = requests.get("https://httpbin.org/ip")
-        response.raise_for_status()
-        return response.json().get("origin")
-    except requests.exceptions.RequestException as e:
-        print(f"Unable to fetch public IP: {e}")
-        return None
+def get_public_ip(timeout: float = 3.0):
+    """Return the public IP address using multiple providers with fallbacks."""
+    providers = [
+        ("https://api.ipify.org?format=json", "json", "ip"),
+        ("https://ifconfig.me/ip", "text", None),
+        ("https://ipinfo.io/ip", "text", None),
+        ("https://checkip.amazonaws.com", "text", None),
+    ]
+
+    for url, mode, key in providers:
+        try:
+            resp = requests.get(url, timeout=timeout)
+            resp.raise_for_status()
+            if mode == "json":
+                data = resp.json()
+                ip = data.get(key)
+            else:
+                ip = resp.text.strip()
+            if ip:
+                return ip
+        except requests.exceptions.RequestException:
+            continue
+
+    print("Unable to fetch public IP from all providers.")
+    return None
