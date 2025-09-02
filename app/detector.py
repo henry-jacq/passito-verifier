@@ -83,10 +83,8 @@ class CLIQRCodeDetector:
                         print(f"->  New QR code detected: {standardized_data}")
                         last_data = standardized_data
 
-                        # Sync data in a separate thread
-                        sync_thread = threading.Thread(
-                            target=self.sync.sync_with_server, args=(standardized_data, player))
-                        sync_thread.start()
+                        # Sync data synchronously to pause further detection until network call finishes
+                        self.sync.sync_with_server(standardized_data, player)
 
                         # Update seen data and save (not saving to file as per new instructions)
                         # self.seen_data.add(standardized_data)

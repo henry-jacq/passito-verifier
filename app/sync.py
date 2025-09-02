@@ -1,5 +1,6 @@
 import hashlib
 import time
+import threading
 from app.server import send_request
 
 class DataSync:
@@ -9,6 +10,10 @@ class DataSync:
         self.auth_token = auth_token
         self.endpoint = endpoint
         self.last_hash = None
+        self._lock = threading.Lock()
+        self._last_sync_ts = 0.0
+        self._pending_data = None
+        self._min_interval_secs = 2.0  # minimum gap between sync calls
 
     def _compute_file_hash(self):
         """Compute a hash of the file contents."""
@@ -30,39 +35,45 @@ class DataSync:
             return []
 
     def sync_with_server(self, data, player):
-        """Sync data with the server if the file has changed."""
+        """Sync data with the server with a lock and rate limit to avoid bursts."""
         if not self.api_url or not self.auth_token:
             print("API URL or auth token not provided. Sync aborted.")
             return False
 
-        # current_hash = self._compute_file_hash()
+        now = time.time()
 
-        # Skip sync if no changes detected
-        # if current_hash == self.last_hash:
-        #     print("No changes detected. Skipping sync.")
-        #     return False
-
-        # Read data and prepare for sync
-        # data = self._read_data_from_file()
-        # if not data:
-        #     print("No data found to sync. Skipping.")
-        #     return False
-
-        # Print the data to verify its content before sending
-        # print(f"Data to sync: {data}")
-
-        # Send request using the provided function
-        success = send_request(self.api_url, self.auth_token,
-                               self.endpoint, {"data": data}, debug=True)
-        if success:
-            print("[+] Data successfully synced with the server.")
-            player.mixer.music.play()
-            while player.mixer.music.get_busy():
-                pass
-            
-            time.sleep(10)
-            # self.last_hash = current_hash
-            return True
-        else:
-            print("[-] Failed to sync data with the server.")
+        # Coalesce if a sync is ongoing or within cooldown window
+        if self._lock.locked() or (now - self._last_sync_ts) < self._min_interval_secs:
+            self._pending_data = data
             return False
+
+        ok = False
+        with self._lock:
+            resp = send_request(self.api_url, self.auth_token,
+                                self.endpoint, {"data": data}, debug=True)
+            # Treat dict with 'error' as failure
+            if isinstance(resp, dict) and resp.get("error"):
+                ok = False
+            else:
+                ok = bool(resp)
+
+            if ok:
+                print("[+] Data successfully synced with the server.")
+                try:
+                    player.mixer.music.play()
+                except Exception:
+                    pass
+                self._last_sync_ts = time.time()
+            else:
+                print("[-] Failed to sync data with the server.")
+
+        # If something new arrived during the sync, send the latest once after delay
+        if self._pending_data is not None:
+            remaining = self._min_interval_secs - (time.time() - self._last_sync_ts)
+            if remaining > 0:
+                time.sleep(remaining)
+            pending = self._pending_data
+            self._pending_data = None
+            return self.sync_with_server(pending, player)
+
+        return ok
