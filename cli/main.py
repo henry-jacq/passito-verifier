@@ -26,7 +26,7 @@ def ensure_config(config_path: str):
         default_config = {"registered": False, "machine_id": None, "ip_address": None}
         with open(config_path, 'w') as f:
             json.dump(default_config, f, indent=4)
-        logging.info(f"Default config created at {os.path.abspath(config_path)}")
+        logging.info("Default configuration file created at %s", os.path.abspath(config_path))
     os.environ['CONFIG_PATH'] = os.path.abspath(config_path)
 
 
@@ -36,17 +36,17 @@ def cmd_start(args):
     api_url = args.api_url or os.getenv('API_URL')
     auth_token = args.auth_token or os.getenv('AUTH_TOKEN')
     if not api_url or not auth_token:
-        logging.error('API_URL and AUTH_TOKEN are required (args or env).')
+        logging.error('API_URL and AUTH_TOKEN are required (arguments or environment variables).')
         sys.exit(1)
 
     ensure_config(args.config)
 
     if not register_device(api_url, auth_token):
-        logging.error('Device registration failed. Exiting...')
+        logging.error('Device registration unsuccessful. Exiting...')
         sys.exit(1)
 
-    logging.info('Proceeding with application logic...')
-    from pygame import mixer
+        logging.info('Initializing QR verification system...')
+        from pygame import mixer
     try:
         import pygame
         pygame.mixer.init()
@@ -64,7 +64,7 @@ def cmd_register(args):
     api_url = args.api_url or os.getenv('API_URL')
     auth_token = args.auth_token or os.getenv('AUTH_TOKEN')
     if not api_url or not auth_token:
-        logging.error('API_URL and AUTH_TOKEN are required (args or env).')
+        logging.error('API_URL and AUTH_TOKEN are required (arguments or environment variables).')
         sys.exit(1)
     ensure_config(args.config)
     ok = register_device(api_url, auth_token)
@@ -77,7 +77,7 @@ def cmd_test_api(args):
     api_url = args.api_url or os.getenv('API_URL')
     auth_token = args.auth_token or os.getenv('AUTH_TOKEN')
     if not api_url or not auth_token:
-        logging.error('API_URL and AUTH_TOKEN are required (args or env).')
+        logging.error('API_URL and AUTH_TOKEN are required (arguments or environment variables).')
         sys.exit(1)
     ok = test_api_availability(api_url, auth_token)
     print(json.dumps({"ok": ok}))
@@ -90,7 +90,7 @@ def cmd_is_active(args):
     api_url = args.api_url or os.getenv('API_URL')
     auth_token = args.auth_token or os.getenv('AUTH_TOKEN')
     if not api_url or not auth_token:
-        logging.error('API_URL and AUTH_TOKEN are required (args or env).')
+        logging.error('API_URL and AUTH_TOKEN are required (arguments or environment variables).')
         sys.exit(1)
     resp = is_active(api_url, auth_token)
     print(json.dumps(resp or {}))

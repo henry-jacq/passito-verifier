@@ -1,6 +1,7 @@
 import hashlib
 import time
 import threading
+import logging
 from app.server import send_request
 try:
     import pygame
@@ -33,7 +34,7 @@ class DataSync:
                 file_data = file.read()
                 return hashlib.md5(file_data.encode()).hexdigest()
         except FileNotFoundError:
-            print("File not found while computing hash.")
+            logging.warning("File not found while computing hash.")
             return None
 
     def _read_data_from_file(self):
@@ -42,13 +43,13 @@ class DataSync:
             with open(self.file_path, "r") as file:
                 return [line.strip() for line in file if line.strip()]
         except FileNotFoundError:
-            print("File not found while reading data.")
+            logging.warning("File not found while reading data.")
             return []
 
     def sync_with_server(self, data, player):
         """Sync data with the server with a lock and rate limit to avoid bursts."""
         if not self.api_url or not self.auth_token:
-            print("API URL or auth token not provided. Sync aborted.")
+            logging.error("API URL or auth token not provided. Sync aborted.")
             return False
 
         now = time.time()
@@ -69,7 +70,7 @@ class DataSync:
                 ok = bool(resp)
 
             if ok:
-                print("[+] Data successfully synced with the server.")
+                logging.info("Data synchronization completed successfully.")
                 try:
                     if self._success_sound is not None:
                         # Play success sound without blocking to keep valid flow snappy
@@ -78,7 +79,7 @@ class DataSync:
                     pass
                 self._last_sync_ts = time.time()
             else:
-                print("[-] Failed to sync data with the server.")
+                logging.error("Failed to sync data with the server.")
 
         # If something new arrived during the sync, send the latest once after delay
         if self._pending_data is not None:

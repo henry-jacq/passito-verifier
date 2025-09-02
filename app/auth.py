@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 from app.system import get_machine_id, get_public_ip
 from app.server import test_api_availability, send_request
 
@@ -11,12 +12,11 @@ def register_device(api_url, auth_token):
 
     # Check if the device is already registered
     if is_device_registered():
-        print("[+] Device is already registered.")
-        print(
-            "[!] If not registered, delete the config file and restart the application.")
+        logging.info("Device registration verified.")
+        logging.info("To re-register, delete the configuration file and restart the application.")
         return True
 
-    print("[*] Registering verifier")
+        logging.info("Initiating device registration.")
 
     # Gather device details
     ip_address = get_public_ip()
@@ -31,10 +31,10 @@ def register_device(api_url, auth_token):
     if send_request(api_url, auth_token, "register", data):
         save_registration_state(
             {"registered": True, "machine_id": machine_id, "ip_address": ip_address})
-        print("[+] Verifier Registration successful")
+        logging.info("Device registration completed successfully.")
         return True
     else:
-        print("[-] Failed to register device.")
+        logging.error("Device registration unsuccessful.")
         return False
 
 
@@ -48,12 +48,12 @@ def load_registration_state():
                 with open(config, 'r') as f:
                     return json.load(f)
             else:
-                print("[!] Config file is empty.")
+                logging.warning("Configuration file is empty.")
                 return None
         except json.JSONDecodeError as e:
-            print(f"[!] Failed to parse config file. Error: {e}")
+            logging.error("Configuration file parsing failed: %s", str(e))
             return None
-    print("[!] Config file does not exist or path is not set.")
+    logging.warning("Configuration file not found or path not configured.")
     return None
 
 # Save the registration state to a file
