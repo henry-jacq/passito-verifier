@@ -3,7 +3,7 @@ import time
 import threading
 from app.sync import DataSync
 import cv2
-import base64, pygame
+import base64, pygame, random
 import hashlib
 from Cryptodome.Cipher import AES
 
@@ -94,13 +94,14 @@ class CLIQRCodeDetector:
                         continue
 
                     if standardized_data and decrypted_data != "Decryption failed!":  # Only process valid QR code data
-                        # Deduplicate recent payloads for a few seconds
+                        # Deduplicate recent payloads for a few seconds (valid path fast)
                         now_ts = time.time()
                         if (now_ts - self._recent_last_purge) > self._recent_ttl:
                             self._recent_set.clear()
                             self._recent_last_purge = now_ts
                         if standardized_data in self._recent_set:
-                            time.sleep(0.05)
+                            # Minimal delay for valid duplicates
+                            time.sleep(0.01)
                             continue
                         self._recent_set.add(standardized_data)
                         print(f"->  New QR code detected: {standardized_data}")
@@ -139,8 +140,11 @@ class CLIQRCodeDetector:
             print(f"[!] Decryption failed: invalid base64 - {str(e)}")
             try:
                 if self._buzzer:
-                    self._buzzer.play()
-                    time.sleep(0.3)
+                    ch = self._buzzer.play()
+                    if ch is not None:
+                        while ch.get_busy():
+                            time.sleep(0.01)
+                    time.sleep(random.uniform(0.15, 0.35))
             except Exception:
                 pass
             return "Decryption failed!"
@@ -161,8 +165,11 @@ class CLIQRCodeDetector:
             print(f"[!] Decryption failed: {str(e)}")
             try:
                 if self._buzzer:
-                    self._buzzer.play()
-                    time.sleep(0.3)
+                    ch = self._buzzer.play()
+                    if ch is not None:
+                        while ch.get_busy():
+                            time.sleep(0.01)
+                    time.sleep(random.uniform(0.15, 0.35))
             except Exception:
                 pass
             return "Decryption failed!"

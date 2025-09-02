@@ -72,8 +72,8 @@ class DataSync:
                 print("[+] Data successfully synced with the server.")
                 try:
                     if self._success_sound is not None:
+                        # Play success sound without blocking to keep valid flow snappy
                         self._success_sound.play()
-                        time.sleep(0.3)
                 except Exception:
                     pass
                 self._last_sync_ts = time.time()
