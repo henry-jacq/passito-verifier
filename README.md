@@ -36,7 +36,10 @@ It is a **Raspberry Pi (RPI)**-based verifier setup, the system will consist of 
 
 4. **Run the Application**:
    ```bash
-   python3 main.py
+   # Default now uses the CLI; start subcommand is implied
+   python -m cli.main
+   # or, if installed with entry points
+   passito-verifier start
    ```
 
 ---
@@ -64,3 +67,38 @@ It is a **Raspberry Pi (RPI)**-based verifier setup, the system will consist of 
 ---
 
 This code setup will enable your Raspberry Pi to function as a verifier device, scanning QR codes, verifying check-ins/outs with the server, and providing user feedback.
+
+---
+
+## CLI Usage (New)
+
+You can use the new CLI to control the verifier without changing existing behavior.
+
+Install dependencies and run via module or entry point:
+
+```bash
+python -m cli.main --help
+passito-verifier --help  # after installing with entry points
+```
+
+Examples:
+
+```bash
+# Start the verifier loop (uses env API_URL/AUTH_TOKEN unless overridden)
+passito-verifier start --config config.json
+
+# Register device only
+passito-verifier register --api-url http://passito.local --auth-token XXX
+
+# Test API availability
+passito-verifier test-api --api-url http://passito.local --auth-token XXX
+
+# Check active status
+passito-verifier is-active --api-url http://passito.local --auth-token XXX
+
+# Show local config cache
+passito-verifier config --config config.json
+
+# Decrypt an encrypted QR payload for debugging
+passito-verifier decrypt --data <base64-payload> --secret passito
+```

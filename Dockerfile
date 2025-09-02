@@ -23,5 +23,5 @@ EXPOSE 80
 # Define environment variable
 ENV NAME Verifier
 
-# Run main.py when the container launches
-CMD ["python3", "main.py"]
+# Run CLI by default (defaults to start subcommand)
+CMD ["python3", "-m", "cli.main"]
