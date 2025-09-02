@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.DEBUG if os.getenv("DEBUG", "0") == "1" else l
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Test the availability of the Server API
-def test_api_availability(api_url, auth_token):
+def test_api_availability(api_url, auth_token, timeout=5.0):
     logging.debug("Testing API availability")
     logging.debug(f"API URL: {api_url}")
     logging.debug(f"Auth Token: {auth_token}")
@@ -20,7 +20,7 @@ def test_api_availability(api_url, auth_token):
             'name': 'RPI-Verifier',
             'auth_token': auth_token
         }
-        response = requests.post(test_endpoint, json=data)
+        response = requests.post(test_endpoint, json=data, timeout=timeout)
 
         # Raises an HTTPError for bad responses (4xx, 5xx)
         response.raise_for_status()
@@ -39,7 +39,7 @@ def test_api_availability(api_url, auth_token):
         return False
 
 # Send a request to the server API
-def send_request(api_url, auth_token, endpoint, data, debug=False):
+def send_request(api_url, auth_token, endpoint, data, debug=False, timeout=5.0):
     if not test_api_availability(api_url, auth_token):
         logging.error("Exiting due to API unavailability.")
         exit(1)
@@ -54,7 +54,7 @@ def send_request(api_url, auth_token, endpoint, data, debug=False):
             logging.debug("Sending request to endpoint: %s", endpoint)
             logging.debug("Data: %s", data)
 
-        response = requests.post(f"{api_url.rstrip('/')}/{endpoint}", headers=headers, json=data)
+        response = requests.post(f"{api_url.rstrip('/')}/{endpoint}", headers=headers, json=data, timeout=timeout)
         response.raise_for_status()
         logging.info("Request successful: %s", response.json())
         return response.json()

@@ -2,6 +2,10 @@ import hashlib
 import time
 import threading
 from app.server import send_request
+try:
+    import pygame
+except Exception:
+    pygame = None
 
 class DataSync:
     def __init__(self, file_path="qr_data.txt", api_url=None, auth_token=None, endpoint="sync"):
@@ -14,6 +18,13 @@ class DataSync:
         self._last_sync_ts = 0.0
         self._pending_data = None
         self._min_interval_secs = 2.0  # minimum gap between sync calls
+        # Preload a short success sound for snappy feedback
+        self._success_sound = None
+        if pygame is not None:
+            try:
+                self._success_sound = pygame.mixer.Sound("sounds/success.mp3")
+            except Exception:
+                self._success_sound = None
 
     def _compute_file_hash(self):
         """Compute a hash of the file contents."""
@@ -60,7 +71,9 @@ class DataSync:
             if ok:
                 print("[+] Data successfully synced with the server.")
                 try:
-                    player.mixer.music.play()
+                    if self._success_sound is not None:
+                        self._success_sound.play()
+                        time.sleep(0.3)
                 except Exception:
                     pass
                 self._last_sync_ts = time.time()

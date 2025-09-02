@@ -14,10 +14,25 @@ class CLIQRCodeDetector:
         self.seen_data = self._load_seen_data()
         self.detector = cv2.QRCodeDetector()
         self.cap = cv2.VideoCapture(0)  # Initialize the camera
+        # Lower resolution for faster decode; adjust as needed
+        try:
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        except Exception:
+            pass
         self.api_url = api_url
         self.auth_token = auth_token
         self.sync = DataSync(file_path=self.output_file,
                              api_url=self.api_url, auth_token=self.auth_token)
+        # Preload buzzer sound to avoid runtime loading delays
+        try:
+            self._buzzer = pygame.mixer.Sound("sounds/buzzer.mp3")
+        except Exception:
+            self._buzzer = None
+        # Small dedup cache to prevent re-processing same payload quickly
+        self._recent_set = set()
+        self._recent_last_purge = time.time()
+        self._recent_ttl = 5.0
 
         # Suppress ECI warnings
         cv2.setLogLevel(0)
@@ -71,15 +86,23 @@ class CLIQRCodeDetector:
 
                     # Convert to JSON object to standardize format
                     try:
-                        # Convert string to dictionary
+                        # Convert string to dictionary (avoid sorting to reduce CPU)
                         json_data = json.loads(decrypted_data)
-                        standardized_data = json.dumps(
-                            json_data, sort_keys=True)  # Convert back to string
+                        standardized_data = json.dumps(json_data, separators=(',', ':'))
                     except json.JSONDecodeError:
-                        print("[!] Decryption failed or invalid JSON")
+                        print("[!] Invalid QR: decryption failed or JSON invalid")
                         continue
 
-                    if standardized_data:  # Only process new QR code data
+                    if standardized_data and decrypted_data != "Decryption failed!":  # Only process valid QR code data
+                        # Deduplicate recent payloads for a few seconds
+                        now_ts = time.time()
+                        if (now_ts - self._recent_last_purge) > self._recent_ttl:
+                            self._recent_set.clear()
+                            self._recent_last_purge = now_ts
+                        if standardized_data in self._recent_set:
+                            time.sleep(0.05)
+                            continue
+                        self._recent_set.add(standardized_data)
                         print(f"->  New QR code detected: {standardized_data}")
                         last_data = standardized_data
 
@@ -89,6 +112,8 @@ class CLIQRCodeDetector:
                         # Update seen data and save (not saving to file as per new instructions)
                         # self.seen_data.add(standardized_data)
                         # self._save_data(standardized_data)
+                    elif decrypted_data == "Decryption failed!":
+                        print("[!] Invalid QR: decryption failed with provided key")
 
                 # Reduced delay to balance performance and efficiency
                 time.sleep(0.2)
@@ -108,7 +133,17 @@ class CLIQRCodeDetector:
         key = hashlib.sha256(shared_secret.encode()).digest()
 
         # Decode the Base64-encoded encrypted string
-        decoded = base64.b64decode(encrypted_data)
+        try:
+            decoded = base64.b64decode(encrypted_data, validate=True)
+        except Exception as e:
+            print(f"[!] Decryption failed: invalid base64 - {str(e)}")
+            try:
+                if self._buzzer:
+                    self._buzzer.play()
+                    time.sleep(0.3)
+            except Exception:
+                pass
+            return "Decryption failed!"
 
         # Extract IV, Tag, and Ciphertext
         iv = decoded[:12]         # First 12 bytes = IV
@@ -124,6 +159,12 @@ class CLIQRCodeDetector:
             return decrypted_data.decode()  # Convert bytes to string
         except (ValueError, TypeError) as e:
             print(f"[!] Decryption failed: {str(e)}")
+            try:
+                if self._buzzer:
+                    self._buzzer.play()
+                    time.sleep(0.3)
+            except Exception:
+                pass
             return "Decryption failed!"
 
 
