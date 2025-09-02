@@ -5,7 +5,6 @@ import time
 import json
 from dotenv import load_dotenv
 from app.auth import register_device
-from app.server import is_active
 from app.detector import CLIQRCodeDetector
 
 # Configure logging
@@ -68,11 +67,6 @@ if __name__ == "__main__":
     # Register the device
     if not register_device(API_URL, AUTH_TOKEN):
         logging.error("Device registration failed. Exiting...")
-        exit(1)
-
-    active_resp = is_active(API_URL, AUTH_TOKEN)
-    if not active_resp or not active_resp.get('ok'):
-        logging.error("Device is not active. Contact Administrator!")
         exit(1)
 
     logging.info("Proceeding with application logic...")

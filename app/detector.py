@@ -48,12 +48,23 @@ class CLIQRCodeDetector:
             last_data = None  # Track the last detected data to avoid redundant syncing
             while True:
                 ret, frame = self.cap.read()
-                if not ret:
-                    print("Failed to grab frame. Retrying...")
+                if not ret or frame is None or getattr(frame, 'size', 0) == 0:
+                    print("Failed to grab valid frame. Retrying...")
+                    time.sleep(0.05)
                     continue
 
-                # Detect and decode QR code
-                data, _, _ = self.detector.detectAndDecode(frame)
+                # Detect and decode QR code with safety guards
+                data = None
+                try:
+                    data, _, _ = self.detector.detectAndDecode(frame)
+                except cv2.error:
+                    # Fallback to multi-decode if single decode errors out
+                    try:
+                        datas, _, _ = self.detector.detectAndDecodeMulti(frame)
+                        if datas and len(datas) > 0:
+                            data = datas[0]
+                    except cv2.error:
+                        data = None
 
                 if data:
                     decrypted_data = self.decrypt_qr_data(data, 'passito')
